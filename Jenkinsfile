@@ -20,7 +20,7 @@ podTemplate(label: 'docker',
               }
               stage('Dockerize') {
                   dir ('app'){
-                      sh "docker build -t badaiv/${app_image}:latest ."
+                      sh "docker build -t badaiv/${app_image}:${BUILD_NUMBER} ."
                       sh "docker tag badaiv/${app_image}:${BUILD_NUMBER} badaiv/${app_image}:latest"
                       sh "docker push badaiv/${app_image}:${BUILD_NUMBER}"
                       sh "docker push badaiv/${app_image}:latest"
