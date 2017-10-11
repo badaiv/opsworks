@@ -4,20 +4,29 @@ podTemplate(label: 'docker',
   ],
   volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')]
   ) {
-  def image = "nginx-lua"
-  def projectId = "plated-complex-147512"
+
+  def nginx_image = "nginx-lua"
+  def app_image = "app_image"
+
   node('docker') {
-    stage('Build Docker image') {
-      git 'https://github.com/badaiv/opsworks.git'
-      container('docker') {
-          withDockerRegistry([credentialsId: 'c9d130d4-a6b5-4298-9c76-b3edaf6386ed']) {
-            sh "echo ${BUILD_NUMBER}"
-            sh "docker build -t badaiv/${image}:${BUILD_NUMBER} ."
-            sh "docker tag badaiv/${image}:${BUILD_NUMBER} badaiv/${image}:latest"
-            sh "docker push badaiv/${image}:${BUILD_NUMBER}"
-            sh "docker push badaiv/${image}:latest"
-        }
+      stage('get sources') {
+          git 'https://github.com/badaiv/opsworks.git'
       }
-    }
+      container('docker') {
+          withDockerRegistry([credentialsId: 'docker.hub']) {
+              stage('Build') {
+                  sh "echo ${BUILD_NUMBER}"
+                  sh "docker build -t ${nginx_image}:latest ."
+              }
+              stage('Dockerize') {
+                  dir ('app'){
+                      sh "docker build -t badaiv/${app_image}:latest ."
+                      sh "docker tag badaiv/${app_image}:${BUILD_NUMBER} badaiv/${app_image}:latest"
+                      sh "docker push badaiv/${app_image}:${BUILD_NUMBER}"
+                      sh "docker push badaiv/${app_image}:latest"
+                  }
+              }
+          }
+      }
   }
 }
